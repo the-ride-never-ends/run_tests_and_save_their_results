@@ -6,13 +6,13 @@ import subprocess
 from typing import Dict, Any, List
 
 
-from utils.common.should_ignore_file import should_ignore_file
+from logger import logger
 from utils.common.results import Results
+from utils.common.should_ignore_file import should_ignore_file
 
 
 class Flake8Collector:
     """Collects and formats code style results for reporting."""
-
 
     def __init__(self) -> None:
         """Initialize the collector."""
@@ -158,12 +158,12 @@ class Flake8Collector:
                         filtered_issues.append(issue)
 
                 if filtered_count > 0:
-                    print(f"Ignored {filtered_count} issues in gitignored files")
+                    logger.info(f"Ignored {filtered_count} issues in gitignored files")
                     self.results.issues = filtered_issues
                     self.results.errors -= filtered_count
                     success = self.results.errors == 0
 
         except Exception as e:
-            print(f"Error running flake8: {e}")
+            logger.exception(f"Error running flake8: {e}")
             success = False
         return success

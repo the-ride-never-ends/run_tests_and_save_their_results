@@ -17,25 +17,46 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 from configs import Configs
+from logger import logger
 
-from utils.main.find_markdown_viewer import find_markdown_viewer
+from reports.services.flake8 import Flake8Collector
+from reports.services.mypy import MyPyCollector
+from reports.services.unittest_ import UnittestCollector
+from reports.services.corner_cutting import CornerCuttingCollector
 from utils.main.show_report import show_report
-
-from utils.reports.implementations.flake8 import Flake8Collector
-from utils.reports.implementations.mypy import MyPyCollector
-from utils.reports.implementations.unittest_ import UnittestCollector
-from utils.reports.corner_cutting_report import CornerCuttingCollector
 
 
 class RunTestsAndSaveTheirResults:
 
-    def __init__(self, configs: dict[str, Any], resources: dict[str, Callable] = None):
+
+    def __init__(self, configs: dict[str, Any] = None, resources: dict[str, Callable] = None) -> None:
         self.configs = configs
         self.resources = resources
 
         self.reports_dir: Path = self.configs.reports_dir
-
         self.collectors: list[Any] = self.resources["collectors"]
+        self._validate_collector_attributes()
+
+
+    def _validate_collector_attributes(self) -> None:
+        """Check if the collectors have the required attributes."""
+        for collector in self.collectors:
+            # Check if collector has the following attributes
+            attrs = [
+                "name", "results", "run", "generate_markdown_report"
+            ]
+            for attr in attrs:
+                if not hasattr(collector, attr):
+                    raise AttributeError(f"Collector {collector} does not have '{attr}' attribute")
+
+            # Check if results attribute has the following attributes
+            attrs = [
+                "errors", "to_dict"
+            ]
+            for attr in attrs:
+                if not hasattr(collector.results, attr):
+                    raise AttributeError(f"Collector {collector} results does not have '{attr}' attribute")
+
 
     def _generate_reports(self, collector: Any) -> None:
         """
@@ -64,36 +85,31 @@ class RunTestsAndSaveTheirResults:
                 case _:
                     raise ValueError(f"Unsupported file type: {path.suffix}")
 
-        print(f"\n{name} reports generated in {self.reports_dir}:")
+        logger.info(f"\n{name} reports generated in {self.reports_dir}:")
         for path in paths:
-            print(f"  - {path}")
+            logger.info(f"  - {path}")
 
 
     def run(self) -> int:
-        viewer_cmd, viewer_desc = find_markdown_viewer()
-
+        """
+        Run the specified tests and generate reports.
+        """
         for collector in self.collectors:
             name = collector.name
 
-            print(f"\n==== Running {name} ====")
+            logger.info(f"\n==== Running {name} ====")
 
             tests_were_successful = collector.run(self.configs)
 
             if tests_were_successful:
-                print(f"\n✅ All {name} tests passed!")
+                logger.info(f"\n✅ All {name} tests passed!")
             else:
-                print(f"\n❌ Tests {name} failed with {collector.results.errors} errors.")
+                logger.info(f"\n❌ Tests {name} failed with {collector.results.errors} errors.")
 
             self._generate_reports(collector)
 
             # Show the latest report
-            show_report(self.reports_dir / f"latest_{name}_report.md", viewer_cmd, viewer_desc)
-
-        print("\n==== All tests completed ====")
-
-
-
-
+            show_report(self.reports_dir / f"latest_{name}_report.md")
 
 
 def main() -> None:
@@ -126,10 +142,6 @@ def main() -> None:
     
     args = parser.parse_args()
 
-    resources = {
-        "collectors": []
-    }
-    
     # Determine what to run
     project_path = Path(args.path).resolve()
     run_tests = not args.lint_only
@@ -137,6 +149,7 @@ def main() -> None:
     run_flake8 = args.flake8 or args.check_all or args.lint_only
     run_corner_cutting = args.corner_cutting or args.check_all
 
+    # Set the configs for the test runner
     configs = Configs(
         test_dir=project_path / "tests",
         reports_dir=project_path / "test_reports",
@@ -145,7 +158,10 @@ def main() -> None:
     )
 
     # Run the tests if requested
-    if run_tests:
+    resources = {
+        "collectors": []
+    }
+    if run_tests: # Unit tests with unittest
         resources["collectors"].append(UnittestCollector())
     if run_mypy: # Type checking
         resources["collectors"].append(MyPyCollector())
@@ -162,12 +178,13 @@ def main() -> None:
     try:
         runner = RunTestsAndSaveTheirResults(configs, resources)
         runner.run()
+        logger.info("\n==== All tests completed ====")
         sys.exit(0)
     except KeyboardInterrupt:
-        print("\n\nKeyboard interrupt detected. Exiting...")
+        logger.info("\n\nKeyboard interrupt detected. Exiting...")
         sys.exit(0)
     except Exception as e:
-        print(f"Error: {e}")
+        logger.info(f"Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

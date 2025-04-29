@@ -52,7 +52,7 @@ class Results:
                         "duration": self.duration,
                         "timestamp": self.timestamp,
                     },
-                    "test_cases": []
+                    "test_cases": [] # {"id": "", "name": "", "module": "", "class": "", "status": "", "message": "", "traceback": ""}
                 }
             case "corner_cutting":
                 return {
@@ -61,7 +61,7 @@ class Results:
                         "total_potential_instances": self.total_potential_instances,
                         "timestamp": self.timestamp,
                     },
-                    "corner_cutting": []
+                    "corner_cutting": [] # sub-dict {"file": "", "line": "", "message": "", }
                 }
             case _:
                 raise ValueError(f"Unknown collector name: {self.name}")

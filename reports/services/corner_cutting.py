@@ -180,7 +180,7 @@ class CornerCuttingCollector:
         }
         comments_and_docstrings = []
 
-        # Get all comments and docstrings with their line numbers using our improved extractor
+        # Get all comments and docstrings with their line numbers.
         self._extract_single_line_comments(content, comments_and_docstrings)
         try:
             self._extract_docstrings_ast(content, comments_and_docstrings)
@@ -208,8 +208,47 @@ class CornerCuttingCollector:
         Returns:
             str: The Markdown report as a string.
         """
-        output = f"# Corner Cutting Report\n"
-        output += f"**File:** {report['file_path']}\n"
+        timestamp = datetime.fromisoformat(self.results.timestamp)
+
+        # Build markdown content
+        content: list[str] = [
+            "# Corner Cutting Report\n"
+            f"Generated on: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}\n",
+            "## Summary\n",
+            f"- **Total corner cutting instances**: {self.results.status.upper()} ({self.results.errors} potential issues)\n",
+        ]
+
+        # Add flake8 issues
+        if self.results.issues:
+            content.append("## Potential Corner Cutting Issues\n")
+
+            # Group issues by file
+            files_with_issues: Dict[str, List[Dict[str, Any]]] = {}
+            for issue in self.results.issues:
+                file_path = issue.get("file", "Unknown file")
+                if file_path not in files_with_issues:
+                    files_with_issues[file_path] = []
+                files_with_issues[file_path].append(issue)
+
+            # Add issues by file
+            for file_path, issues in files_with_issues.items():
+                content.append(f"### {file_path}\n\n")
+
+                for issue in issues:
+                    line = issue.get("line", "")
+                    column = issue.get("column", "")
+                    message = issue.get("message", "")
+                    error_code = issue.get("error_code", "")
+
+                    location = f"Line {line}"
+                    if column:
+                        location += f", Col {column}"
+
+                    content.append(f"- {location}: {error_code} {message}")
+
+                content.append("")
+
+
         output += f"**Total corner cutting instances:** {report['total_corner_cutting_instances']}\n"
 
         if self.results.total_potential_instances  > 0:
@@ -221,6 +260,7 @@ class CornerCuttingCollector:
 
         return output
 
+    # TODO Finish this method
     def run(self, target_dir: str) -> dict:
         """
         Generate a report of corner cutting instances in a file.
@@ -253,36 +293,3 @@ class CornerCuttingCollector:
         }
         
         return report
-
-
-def print_report(report: dict, json_format: bool = False, output_path: str = None) -> None:
-    """
-    Print or save the corner cutting report in the specified format.
-    
-    Args:
-        report (dict): The corner cutting report.
-        json_format (bool): Whether to output in JSON format.
-        output_path (str): Path to save the report to, if None prints to stdout.
-    """
-    output_content = ""
-    
-    if json_format:
-        output_content = json.dumps(report, indent=4)
-    else:
-        output_content += f"File: {report['file_path']}\n"
-        output_content += f"Total corner cutting instances: {report['total_corner_cutting_instances']}\n"
-        
-        if report['total_corner_cutting_instances'] > 0:
-            output_content += "\nDetails:\n"
-            for word, instances in report['corner_cutting_details'].items():
-                output_content += f"\n'{word}' appears in:\n"
-                for context, line in instances:
-                    output_content += f"  Line {line}: \"{context}\"\n"
-    
-    if output_path:
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(output_content)
-        print(f"Report saved to {output_path}")
-    else:
-        print(output_content)
-

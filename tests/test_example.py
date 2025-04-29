@@ -26,6 +26,11 @@ class ExampleTest(unittest.TestCase):
         """This test is skipped as an example."""
         self.fail("This should be skipped")
 
+    @unittest.skip("Example of a Claude being lazy when making a test")
+    def test_skipped(self):
+        """This test is an example of Claude being lazy when making a test."""
+        # In a real implementation, I would write a test here.
+        self.fail("Claude was lazy and didn't write this test properly")
 
 if __name__ == "__main__":
     unittest.main()
