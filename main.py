@@ -118,7 +118,7 @@ def main() -> None:
     """
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description="Run tests, type checking, and linting for the project"
+        description="Run tests, type checking, and linting for a specified Python project."
     )
     parser.add_argument("--path", required=True, type=str, default=".", 
                         help="Path to the project directory")
@@ -137,7 +137,7 @@ def main() -> None:
                         help="Run tests, type checking, linting, and corner cutting checks")
     parser.add_argument("--lint-only", action="store_true", 
                         help="Run only type checking and linting (no tests)")
-    parser.add_argument("--respect-gitignore", "--gitignore", action="store_true", type=bool,
+    parser.add_argument("--respect-gitignore", "--gitignore", action="store_true",
                        help="Ignore files/folders listed in .gitignore during linting")
     
     args = parser.parse_args()
