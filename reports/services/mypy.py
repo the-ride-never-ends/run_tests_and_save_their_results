@@ -21,8 +21,5 @@ class MyPyCollector(Collector):
             configs: Configuration dataclass
             resources: Dictionary of resources used by the collector
         """
-        # Initialize with base constructor
-        super().__init__(configs, resources)
-        
-        # Override name
-        self.name = "mypy"
+        # Initialize with base constructor, passing the name
+        super().__init__(configs, resources, name="mypy")

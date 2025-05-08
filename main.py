@@ -23,7 +23,23 @@ from reports.services.flake8 import Flake8Collector
 from reports.services.mypy import MyPyCollector
 from reports.services.unittest_ import UnittestCollector
 from reports.services.corner_cutting import CornerCuttingCollector
-from utils.main.show_report import show_report
+
+# Import utility functions for collector resources
+from utils.reports.unittest.run_command import run_command as unittest_run_command
+from utils.reports.unittest.parse_output import parse_output as unittest_parse_output
+from utils.reports.unittest.format_report import format_report as unittest_format_report
+
+from utils.reports.flake8.run_command import run_command as flake8_run_command
+from utils.reports.flake8.parse_output import parse_output as flake8_parse_output
+from utils.reports.flake8.format_report import format_report as flake8_format_report
+
+from utils.reports.mypy.run_command import run_command as mypy_run_command
+from utils.reports.mypy.parse_output import parse_output as mypy_parse_output
+from utils.reports.mypy.format_report import format_report as mypy_format_report
+
+from utils.reports.corner_cutting.run_command import run_command as corner_cutting_run_command
+from utils.reports.corner_cutting.parse_output import parse_output as corner_cutting_parse_output
+from utils.reports.corner_cutting.format_report import format_report as corner_cutting_format_report
 
 
 class RunTestsAndSaveTheirResults:
@@ -99,7 +115,7 @@ class RunTestsAndSaveTheirResults:
 
             logger.info(f"\n==== Running {name} ====")
 
-            tests_were_successful = collector.run(self.configs)
+            tests_were_successful = collector.run()
 
             if tests_were_successful:
                 logger.info(f"\n✅ All {name} tests passed!")
@@ -107,9 +123,6 @@ class RunTestsAndSaveTheirResults:
                 logger.info(f"\n❌ Tests {name} failed with {collector.results.errors} errors.")
 
             self._generate_reports(collector)
-
-            # Show the latest report
-            # show_report(self.reports_dir / f"latest_{name}_report.md")
 
 
 def main() -> None:
@@ -157,18 +170,87 @@ def main() -> None:
         verbosity=1 if args.quiet else 2
     )
 
+    # We need a results class for each collector
+    class Results:
+        """Test results class for collecting test/lint outputs."""
+        
+        def __init__(self, name):
+            self.name = name
+            self.errors = 0
+            self.failures = 0
+            self.tests = 0
+            self.status = "not_run"
+            self.test_cases = []
+            self.issues = []
+            self.timestamp = datetime.now().isoformat()
+            self.duration = 0
+            self.success_rate = 0
+            self.skipped = 0
+            self.expected_failures = 0
+            self.unexpected_successes = 0
+            
+        def to_dict(self):
+            """Convert results to a dictionary."""
+            return {
+                "summary": {
+                    "name": self.name,
+                    "errors": self.errors,
+                    "failures": self.failures,
+                    "tests": self.tests,
+                    "status": self.status,
+                    "timestamp": self.timestamp,
+                    "duration": self.duration,
+                    "success_rate": self.success_rate
+                },
+                "details": {
+                    "test_cases": self.test_cases,
+                    "issues": self.issues
+                }
+            }
+    
+    def create_results(name):
+        """Factory function for creating result objects."""
+        return Results(name)
+        
     # Run the tests if requested
     resources = {
         "collectors": []
     }
     if run_tests: # Unit tests with unittest
-        resources["collectors"].append(UnittestCollector())
+        unittest_resources = {
+            "create_results": create_results,
+            "run_command": unittest_run_command,
+            "parse_output": unittest_parse_output,
+            "format_report": unittest_format_report
+        }
+        resources["collectors"].append(UnittestCollector(configs=configs, resources=unittest_resources))
+        
     if run_mypy: # Type checking
-        resources["collectors"].append(MyPyCollector())
+        mypy_resources = {
+            "create_results": create_results,
+            "run_command": mypy_run_command,
+            "parse_output": mypy_parse_output,
+            "format_report": mypy_format_report
+        }
+        resources["collectors"].append(MyPyCollector(configs=configs, resources=mypy_resources))
+        
     if run_flake8: # Code style
-        resources["collectors"].append(Flake8Collector())
+        flake8_resources = {
+            "create_results": create_results,
+            "run_command": flake8_run_command,
+            "parse_output": flake8_parse_output,
+            "format_report": flake8_format_report
+        }
+        resources["collectors"].append(Flake8Collector(configs=configs, resources=flake8_resources))
+        
     if run_corner_cutting: # LLM laziness
-        resources["collectors"].append(CornerCuttingCollector())
+        corner_cutting_resources = {
+            "create_results": create_results,
+            "run_command": corner_cutting_run_command,
+            "parse_output": corner_cutting_parse_output,
+            "format_report": corner_cutting_format_report
+        }
+        resources["collectors"].append(CornerCuttingCollector(configs=configs, resources=corner_cutting_resources))
     
     # Show usage help if nothing was run
     if not run_tests and not run_mypy and not run_flake8 and not run_corner_cutting:

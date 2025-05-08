@@ -21,8 +21,5 @@ class CornerCuttingCollector(Collector):
             configs: Configuration dataclass
             resources: Dictionary of resources used by the collector
         """
-        # Initialize with base constructor
-        super().__init__(configs, resources)
-        
-        # Override name
-        self.name = "corner_cutting"
+        # Initialize with base constructor, passing the name
+        super().__init__(configs, resources, name="corner_cutting")

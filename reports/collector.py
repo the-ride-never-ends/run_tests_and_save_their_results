@@ -13,19 +13,22 @@ class Collector:
     Implements the inversion of control pattern for better testability and flexibility.
     """
 
-    def __init__(self, configs=None, resources=None):
+    def __init__(self, configs=None, resources=None, name="base"):
         """
         Initialize the collector with configs and resources.
         
         Args:
             configs: Configuration dataclass
             resources: Dictionary of resources used by the collector
+            name: Name of the collector
         """
         self.configs = configs or {}
         self.resources = resources or {}
         
-        # Extract configuration values
-        self.name = "base"
+        # Set collector name
+        self.name = name
+        
+        # Create results with collector name
         self.results = self.resources.get("create_results", lambda x: None)(self.name)
         
         # Extract resource functions

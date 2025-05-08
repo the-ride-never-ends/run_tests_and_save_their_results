@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-05-08
 
 ### Added
 
@@ -14,12 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created base collector class implementing the inversion of control pattern
 - Added utility functions for each collector's responsibilities (run_command, parse_output, format_report)
 - Added tests for each collector implementation (UnittestCollector, Flake8Collector, MyPyCollector, CornerCuttingCollector)
+- Updated main.py to use the new collector implementations with proper resource dictionaries
 
 ### Changed
 
 - Refactored all collector classes to use dependency injection instead of inheritance
 - Moved original collector implementations to deprecated/ directory
 - Separated the responsibility of each collector into discrete utility functions
+- Modified base collector to accept name parameter in constructor
+- Fixed collector initialization to properly pass collector name to create_results function
+- Updated RunTestsAndSaveTheirResults class to work with the new collector API
 
 ## [0.1.0] - 2025-04-20
 
