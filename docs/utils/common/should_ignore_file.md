@@ -1,4 +1,4 @@
-# should_ignore_file.py: last updated 03:33 PM on April 27, 2025
+# should_ignore_file.py: last updated 08:02 PM on May 07, 2025
 
 **File Path:** `run_tests_and_save_their_results/utils/common/should_ignore_file.py`
 
@@ -13,7 +13,7 @@
 ## `should_ignore_file`
 
 ```python
-def should_ignore_file(file_path, spec)
+def should_ignore_file(file_path, spec=None)
 ```
 
 Check if a file should be ignored based on gitignore patterns or if it's in a venv directory.
@@ -22,7 +22,7 @@ Check if a file should be ignored based on gitignore patterns or if it's in a ve
 
 - `file_path` (`str`): The file path to check
 
-- `spec` (`Optional[pathspec.PathSpec]`): The PathSpec object with gitignore patterns
+- `spec` (`Any`): The PathSpec object with gitignore patterns
 
 **Returns:**
 

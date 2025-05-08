@@ -5,6 +5,7 @@ Script to run all tests for Test Generator and generate reports.
 """
 import datetime
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -218,6 +219,23 @@ class TestResultCollector:
             f.write('\n'.join(content))
 
 
+class ProjectPathDiscoverer(unittest.TestLoader):
+    """Custom test loader that adjusts Python path for importing project modules."""
+    
+    def __init__(self, project_root):
+        super().__init__()
+        self.project_root = project_root
+
+    def discover(self, start_dir, pattern='test*.py', top_level_dir=None):
+        """
+        Discover tests but first ensure the project root is in the Python path.
+        """
+        # Add project root to sys.path if not already there
+        if self.project_root not in sys.path:
+            sys.path.insert(0, self.project_root)
+        
+        return super().discover(start_dir, pattern, top_level_dir)
+
 class RunTests:
     """Discovers and runs tests, then generates reports."""
 
@@ -240,15 +258,27 @@ class RunTests:
         Returns:
             Tuple containing success status and test results
         """
-        # Discover tests
-        test_suite = unittest.defaultTestLoader.discover(str(self.test_dir))
+        # Save the original system path
+        original_sys_path = sys.path.copy()
 
-        # Create result collector
-        collector = TestResultCollector()
+        try:
+            # Add the project root to the Python path
+            project_root = os.path.dirname(self.test_dir)
+            sys.path.insert(0, project_root)
 
-        # Run tests
-        test_runner = unittest.TextTestRunner(verbosity=self.verbosity)
-        result = test_runner.run(test_suite)
+            # Discover tests
+            test_suite = unittest.defaultTestLoader.discover(str(self.test_dir))
+
+            # Create result collector
+            collector = TestResultCollector()
+
+            # Run tests
+            test_runner = unittest.TextTestRunner(verbosity=self.verbosity)
+            result = test_runner.run(test_suite)
+
+        finally:
+            # Restore the original system path, regardless of whether the tests succeed or fail
+            sys.path = original_sys_path
 
         # Collect results
         collector.collect_results(result)

@@ -2,6 +2,9 @@ from pathlib import Path
 import subprocess
 
 
+from logger import logger
+
+
 def _find_markdown_viewer() -> tuple[str, str]:
     """
     Find an available markdown viewer.
@@ -11,12 +14,15 @@ def _find_markdown_viewer() -> tuple[str, str]:
     """
     command_type = ["glow", "bat", "less"]
     for cmd in command_type:
-        if subprocess.run(["command", "-v", cmd], shell=True, capture_output=True).returncode == 0:
+        cmd_list = ["command", "-v", cmd]
+        _cmd = ' '.join(cmd_list)
+        if subprocess.run(_cmd, shell=True, capture_output=True).returncode == 0:
+            logger.debug(f"Found {cmd} command")
             match cmd:
                 case "glow" | "bat":
-                    return cmd, "Showing report preview:"
+                    return _cmd, "Showing report preview:"
                 case "less":
-                    return cmd, "Showing report preview (press q to exit):"
+                    return _cmd, "Showing report preview (press q to exit):"
                 case _:
                     return "", "To view the full report, open the file in a text editor."
 
@@ -38,6 +44,7 @@ def show_report(report_path: Path) -> None:
 
     if viewer_cmd:
         print(f"\n{description}")
-        subprocess.run([viewer_cmd, str(report_path)])
+        output = subprocess.run([viewer_cmd, " ", report_path.resolve()], shell=True, capture_output=True)
+        print(output.stdout.decode("utf-8"))
     else:
         print(f"\n{description}")

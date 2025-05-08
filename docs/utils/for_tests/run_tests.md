@@ -1,4 +1,4 @@
-# run_tests.py: last updated 03:33 PM on April 27, 2025
+# run_tests.py: last updated 08:02 PM on May 07, 2025
 
 **File Path:** `run_tests_and_save_their_results/utils/for_tests/run_tests.py`
 
@@ -11,6 +11,7 @@ Script to run all tests for Test Generator and generate reports.
 ### Classes
 
 - [`TestResultCollector`](#testresultcollector)
+- [`ProjectPathDiscoverer`](#projectpathdiscoverer)
 - [`RunTests`](#runtests)
 
 ## Classes
@@ -73,6 +74,26 @@ Generate a Markdown report of the test results.
 **Parameters:**
 
 - `output_path` (`Path`): Path to write the report to
+
+## `ProjectPathDiscoverer`
+
+```python
+class ProjectPathDiscoverer(unittest.TestLoader)
+```
+
+Custom test loader that adjusts Python path for importing project modules.
+
+**Methods:**
+
+- [`discover`](#discover)
+
+### `discover`
+
+```python
+def discover(self, start_dir, pattern='test*.py', top_level_dir=None)
+```
+
+Discover tests but first ensure the project root is in the Python path.
 
 ## `RunTests`
 

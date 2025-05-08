@@ -1,11 +1,13 @@
 import os
+import re
 from typing import Optional
 
 
-import pathspec
+#import pathspec
+#Optional[pathspec.PathSpec]
 
 
-def should_ignore_file(file_path: str, spec: Optional[pathspec.PathSpec]) -> bool:
+def should_ignore_file(file_path: str, spec=None) -> bool:
     """
     Check if a file should be ignored based on gitignore patterns or if it's in a venv directory.
 
@@ -17,14 +19,16 @@ def should_ignore_file(file_path: str, spec: Optional[pathspec.PathSpec]) -> boo
         True if the file should be ignored, False otherwise
     """
     # Always ignore files in any directory named 'venv'
-    if '/venv/' in file_path or file_path.startswith('venv/') or file_path.endswith('/venv'):
+    if re.search(r'(?:^|/|\\)venv(?:/|\\|$)', file_path):
         return True
-
-    if spec is None:
+    else:
         return False
 
-    # Convert to path relative to the project root
-    rel_path = os.path.relpath(file_path, '.')
+    # if spec is None:
+    #     return False
 
-    # Check if the file matches any gitignore pattern
-    return spec.match_file(rel_path)
+    # # Convert to path relative to the project root
+    # rel_path = os.path.relpath(file_path, '.')
+
+    # # Check if the file matches any gitignore pattern
+    # return spec.match_file(rel_path)

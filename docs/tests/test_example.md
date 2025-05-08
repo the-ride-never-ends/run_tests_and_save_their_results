@@ -1,4 +1,4 @@
-# test_example.py: last updated 03:33 PM on April 27, 2025
+# test_example.py: last updated 08:02 PM on May 07, 2025
 
 **File Path:** `run_tests_and_save_their_results/tests/test_example.py`
 
@@ -27,6 +27,7 @@ Example test case.
 - [`test_addition`](#test_addition)
 - [`test_multiplication`](#test_multiplication)
 - [`test_skipped`](#test_skipped)
+- [`test_skipped`](#test_skipped)
 - [`test_subtraction`](#test_subtraction)
 
 ### `test_addition`
@@ -52,6 +53,14 @@ def test_skipped(self)
 ```
 
 This test is skipped as an example.
+
+### `test_skipped`
+
+```python
+def test_skipped(self)
+```
+
+This test is an example of Claude being lazy when making a test.
 
 ### `test_subtraction`
 

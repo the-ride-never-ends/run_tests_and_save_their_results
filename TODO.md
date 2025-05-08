@@ -4,6 +4,36 @@ A prioritized list of tasks for improving the test runner and report generator.
 
 ### Todo
 
+- [x] Implement inversion of control for collector classes
+  - [x] Design new collector structure using dependency injection
+  - [x] Create tests for the base collector with IoC pattern
+  - [x] Implement the base collector structure according to tests
+  - [x] Refactor UnittestCollector to use dependency injection
+    - [x] Extract run_command functionality to a separate module
+    - [x] Extract parse_output functionality to a separate module
+    - [x] Extract format_report functionality to a separate module
+    - [x] Implement the refactored UnittestCollector
+  - [x] Refactor Flake8Collector to use dependency injection
+    - [x] Extract run_command functionality to a separate module
+    - [x] Extract parse_output functionality to a separate module
+    - [x] Extract format_report functionality to a separate module
+    - [x] Implement the refactored Flake8Collector
+  - [x] Refactor MyPyCollector to use dependency injection
+    - [x] Extract run_command functionality to a separate module
+    - [x] Extract parse_output functionality to a separate module
+    - [x] Extract format_report functionality to a separate module
+    - [x] Implement the refactored MyPyCollector
+  - [x] Refactor CornerCuttingCollector to use dependency injection
+    - [x] Extract run_command functionality to a separate module
+    - [x] Extract parse_output functionality to a separate module
+    - [x] Extract format_report functionality to a separate module
+    - [x] Implement the refactored CornerCuttingCollector
+  - [x] Write tests for specific collector implementations
+  - [ ] Update main.py to use the new collector implementations
+  - [ ] Add necessary functions to resources dictionary
+  - [ ] Run the tests to verify the implementation
+  - [ ] Update documentation to reflect the new IoC pattern
+
 - [ ] Fix CornerCuttingCollector implementation
   - [ ] Fix undefined variables in run() method
   - [ ] Fix report variable reference in generate_markdown_report()

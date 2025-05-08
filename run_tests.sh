@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# Ensure we're in the right directory
-cd "$(dirname "$0")"
-
-# Activate virtual environment if it exists
+# Activate virtual environment for the tests if they exist
 if [ -d "venv" ]; then
     source venv/bin/activate
+    echo "Activated virtual environment from venv"
+else
+    echo "No virtual environment found in venv"
+    exit 1
 fi
 
 # Pass all arguments to the Python script

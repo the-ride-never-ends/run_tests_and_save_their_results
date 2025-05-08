@@ -109,7 +109,7 @@ class RunTestsAndSaveTheirResults:
             self._generate_reports(collector)
 
             # Show the latest report
-            show_report(self.reports_dir / f"latest_{name}_report.md")
+            # show_report(self.reports_dir / f"latest_{name}_report.md")
 
 
 def main() -> None:
@@ -184,7 +184,7 @@ def main() -> None:
         logger.info("\n\nKeyboard interrupt detected. Exiting...")
         sys.exit(0)
     except Exception as e:
-        logger.info(f"Error: {e}")
+        logger.exception(f"Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
