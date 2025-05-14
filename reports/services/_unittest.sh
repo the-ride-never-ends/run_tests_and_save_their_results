@@ -8,6 +8,10 @@ source ~/.bashrc 2>/dev/null || source ~/.bash_profile 2>/dev/null || source ~/.
     exit 1
 }
 
+# Load the venv path from the environment.
+TEST_VENV_PATH=${TEST_VENV_PATH:-"$(pwd)/venv"}
+echo "Using virtual environment path: $TEST_VENV_PATH"
+
 # Check if argument is provided, otherwise use current directory
 if [ "$1" ]; then
     PROJECT_DIR="$1"
@@ -18,15 +22,22 @@ else
 fi
 
 # Activate virtual environment for the tests if they exist
-if [ -d "venv" ]; then
-    source venv/bin/activate || source .venv/bin/activate || {
+if [ -d "$TEST_VENV_PATH" ]; then
+    source "$TEST_VENV_PATH/bin/activate" || {
         echo "Failed to activate virtual environment. Please check the venv directory."
         exit 1
-    }
-    echo "Activated virtual environment from venv"
+    } && echo "Activated virtual environment at $TEST_VENV_PATH"
 else
-    echo "No virtual environment found in venv"
+    echo "No virtual environment found at $TEST_VENV_PATH"
     exit 1
 fi
 
-python -m unittest discover -s "$PROJECT_DIR/tests" -p test_*.py
+# Run the tests
+python -m unittest discover -s "$PROJECT_DIR" -p test_*.py
+
+# Deactivate the virtual environment
+deactivate || {
+    echo "Failed to deactivate virtual environment. Please check the venv directory."
+    exit 1
+} && echo "Deactivated virtual environment at $TEST_VENV_PATH"
+exit 0

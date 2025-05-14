@@ -26,15 +26,16 @@ class Collector:
         self.resources = resources or {}
         
         # Set collector name
-        self.name = name
+        self.name = self.resources.get("name", "base")
         
         # Create results with collector name
-        self.results = self.resources.get("create_results", lambda x: None)(self.name)
+        self._create_results = self.resources["create_results"]
+        self.results = self._create_results(self.name)
         
         # Extract resource functions
-        self._run_command = self.resources.get("run_command")
-        self._parse_output = self.resources.get("parse_output")
-        self._format_report = self.resources.get("format_report")
+        self._run_command = self.resources["run_command"]
+        self._parse_output = self.resources["parse_output"]
+        self._format_report = self.resources["format_report"]
 
     def run(self) -> bool:
         """
@@ -50,7 +51,9 @@ class Collector:
         output = self._run_command(self.configs)
         
         # Use resources to parse output
-        success = self._parse_output(output, self.results)
+        success: bool = self._parse_output(output, self.results)
+        
+        self.results.status = "pass" if success else "fail"
         
         return success
 

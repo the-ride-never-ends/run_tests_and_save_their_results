@@ -19,9 +19,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from configs import Configs
 from logger import logger
 
+from reports.collector import Collector
 from reports.services.flake8 import Flake8Collector
 from reports.services.mypy import MyPyCollector
-from reports.services.unittest_ import UnittestCollector
 from reports.services.corner_cutting import CornerCuttingCollector
 
 # Import utility functions for collector resources
@@ -44,13 +44,15 @@ from utils.reports.corner_cutting.format_report import format_report as corner_c
 
 class RunTestsAndSaveTheirResults:
 
-
-    def __init__(self, configs: dict[str, Any] = None, resources: dict[str, Callable] = None) -> None:
+    def __init__(self, 
+                 configs: Configs = None, 
+                 resources: dict[str, Callable] = None
+                 ) -> None:
         self.configs = configs
         self.resources = resources
 
         self.reports_dir: Path = self.configs.reports_dir
-        self.collectors: list[Any] = self.resources["collectors"]
+        self.collectors: list[Collector] = self.resources["collectors"]
         self._validate_collector_attributes()
 
 
@@ -103,7 +105,7 @@ class RunTestsAndSaveTheirResults:
 
         logger.info(f"\n{name} reports generated in {self.reports_dir}:")
         for path in paths:
-            logger.info(f"  - {path}")
+            logger.info(f"{self.reports_dir / path}")
 
 
     def run(self) -> int:
@@ -120,10 +122,57 @@ class RunTestsAndSaveTheirResults:
             if tests_were_successful:
                 logger.info(f"\n✅ All {name} tests passed!")
             else:
-                logger.info(f"\n❌ Tests {name} failed with {collector.results.errors} errors.")
+                logger.info(f"\n❌ Tests {name} failed with {collector.results.errors} errors and {collector.results.failures} failures.")
 
             self._generate_reports(collector)
 
+# results.py
+from dataclasses import dataclass, field
+from datetime import datetime
+
+# We need a results class for each collector
+@dataclass
+class Results:
+    """Test results class for collecting test/lint outputs."""
+
+    name: str = "base"
+    errors: int = 0
+    failures: int = 0
+    tests: int = 0
+    status: str = "not_run"
+    test_cases: list = field(default_factory=list)
+    issues: list = field(default_factory=list)
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    duration: int = 0
+    success_rate: int = 0
+    skipped: int = 0
+    expected_failures: int = 0
+    unexpected_successes: int = 0
+
+    def to_dict(self):
+        """Convert results to a dictionary."""
+        return {
+            "summary": {
+                "name": self.name,
+                "errors": self.errors,
+                "failures": self.failures,
+                "tests": self.tests,
+                "status": self.status,
+                "timestamp": self.timestamp,
+                "duration": self.duration,
+                "success_rate": self.success_rate
+            },
+            "details": {
+                "test_cases": self.test_cases,
+                "issues": self.issues
+            }
+        }
+
+def create_results(name: str) -> Results:
+    """Factory function for creating result objects."""
+    results = Results()
+    results.name = name
+    return results
 
 def main() -> None:
     """
@@ -170,47 +219,7 @@ def main() -> None:
         verbosity=1 if args.quiet else 2
     )
 
-    # We need a results class for each collector
-    class Results:
-        """Test results class for collecting test/lint outputs."""
-        
-        def __init__(self, name):
-            self.name = name
-            self.errors = 0
-            self.failures = 0
-            self.tests = 0
-            self.status = "not_run"
-            self.test_cases = []
-            self.issues = []
-            self.timestamp = datetime.now().isoformat()
-            self.duration = 0
-            self.success_rate = 0
-            self.skipped = 0
-            self.expected_failures = 0
-            self.unexpected_successes = 0
-            
-        def to_dict(self):
-            """Convert results to a dictionary."""
-            return {
-                "summary": {
-                    "name": self.name,
-                    "errors": self.errors,
-                    "failures": self.failures,
-                    "tests": self.tests,
-                    "status": self.status,
-                    "timestamp": self.timestamp,
-                    "duration": self.duration,
-                    "success_rate": self.success_rate
-                },
-                "details": {
-                    "test_cases": self.test_cases,
-                    "issues": self.issues
-                }
-            }
-    
-    def create_results(name):
-        """Factory function for creating result objects."""
-        return Results(name)
+
         
     # Run the tests if requested
     resources = {
@@ -218,39 +227,43 @@ def main() -> None:
     }
     if run_tests: # Unit tests with unittest
         unittest_resources = {
+            "name": "unittest",
             "create_results": create_results,
             "run_command": unittest_run_command,
             "parse_output": unittest_parse_output,
             "format_report": unittest_format_report
         }
-        resources["collectors"].append(UnittestCollector(configs=configs, resources=unittest_resources))
+        resources["collectors"].append(Collector(configs=configs, resources=unittest_resources))
         
     if run_mypy: # Type checking
         mypy_resources = {
+            "name": "mypy",
             "create_results": create_results,
             "run_command": mypy_run_command,
             "parse_output": mypy_parse_output,
             "format_report": mypy_format_report
         }
-        resources["collectors"].append(MyPyCollector(configs=configs, resources=mypy_resources))
+        resources["collectors"].append(Collector(configs=configs, resources=mypy_resources))
         
     if run_flake8: # Code style
         flake8_resources = {
+            "name": "flake8",
             "create_results": create_results,
             "run_command": flake8_run_command,
             "parse_output": flake8_parse_output,
             "format_report": flake8_format_report
         }
-        resources["collectors"].append(Flake8Collector(configs=configs, resources=flake8_resources))
+        resources["collectors"].append(Collector(configs=configs, resources=flake8_resources))
         
     if run_corner_cutting: # LLM laziness
         corner_cutting_resources = {
+            "name": "corner_cutting",
             "create_results": create_results,
             "run_command": corner_cutting_run_command,
             "parse_output": corner_cutting_parse_output,
             "format_report": corner_cutting_format_report
         }
-        resources["collectors"].append(CornerCuttingCollector(configs=configs, resources=corner_cutting_resources))
+        resources["collectors"].append(Collector(configs=configs, resources=corner_cutting_resources))
     
     # Show usage help if nothing was run
     if not run_tests and not run_mypy and not run_flake8 and not run_corner_cutting:

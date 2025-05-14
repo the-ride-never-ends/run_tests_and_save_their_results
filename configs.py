@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Optional
 
@@ -26,6 +27,11 @@ class Configs:
     respect_gitignore: bool
     verbosity: int
     gitignore_spec: Optional[pathspec.PathSpec] = None
+
+    @cached_property
+    def ROOT_DIR(self) -> Path:
+        """Return the root directory of the project."""
+        return Path(__file__).parent.resolve()
 
     def __post_init__(self):
         # Ensure paths are absolute and exist.
